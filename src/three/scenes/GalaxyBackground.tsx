@@ -15,22 +15,22 @@ interface SpiralGalaxyProps {
 }
 
 /**
- * Procedural 3D Logarithmic Spiral Galaxy
- * Generates an authentic rotating pinwheel galaxy with a glowing core,
- * distinct spiral arms, interstellar dust lanes, and spatial depth.
+ * 3D Logarithmic Spiral Galaxy that responds to cursor and scroll movement
  */
 const SpiralGalaxy3D: React.FC<SpiralGalaxyProps> = ({
-  particleCount = 7500,
-  radius = 220,
+  particleCount = 8500,
+  radius = 230,
   branches = 3,
   spin = 1.35,
-  randomness = 0.42,
-  insideColor = '#FFF4D0',  // Warm brilliant stellar core
-  midColor = '#48D7FF',     // Electric cyan spiral arms
-  outsideColor = '#8B5CF6'  // Deep cosmic violet outer fringe
+  randomness = 0.44,
+  insideColor = '#FFF6D6',  // Warm luminous stellar core
+  midColor = '#48D7FF',     // Electric neon cyan arms
+  outsideColor = '#A78BFA'  // Cosmic violet/magenta fringe
 }) => {
+  const groupRef = useRef<THREE.Group>(null);
   const pointsRef = useRef<THREE.Points>(null);
   const coreGlowRef = useRef<THREE.Mesh>(null);
+  const coreOuterGlowRef = useRef<THREE.Mesh>(null);
 
   const { positions, colors, scales } = useMemo(() => {
     const pos = new Float32Array(particleCount * 3);
@@ -42,47 +42,48 @@ const SpiralGalaxy3D: React.FC<SpiralGalaxyProps> = ({
     const cOutside = new THREE.Color(outsideColor);
 
     for (let i = 0; i < particleCount; i++) {
-      // Distance from center: higher density at core
-      const rRatio = Math.pow(Math.random(), 1.7);
+      // Density: concentrated near galactic nucleus
+      const rRatio = Math.pow(Math.random(), 1.6);
       const r = rRatio * radius;
 
-      // Branch angle for spiral arms
+      // Logarithmic spiral branch geometry
       const branchAngle = ((i % branches) / branches) * Math.PI * 2;
       const spinAngle = r * (spin / 100);
 
-      // Random scatter off the spiral spine (decreases towards center)
       const randomPower = 2.4;
       const randomX = Math.pow(Math.random(), randomPower) * (Math.random() < 0.5 ? 1 : -1) * randomness * r;
-      const randomY = Math.pow(Math.random(), randomPower) * (Math.random() < 0.5 ? 1 : -1) * (randomness * 0.4) * r; // Disk thickness
+      const randomY = Math.pow(Math.random(), randomPower) * (Math.random() < 0.5 ? 1 : -1) * (randomness * 0.45) * r;
       const randomZ = Math.pow(Math.random(), randomPower) * (Math.random() < 0.5 ? 1 : -1) * randomness * r;
 
       const x = Math.cos(branchAngle + spinAngle) * r + randomX;
-      const y = randomY; // disk vertical axis
+      const y = randomY; // vertical disk thickness
       const z = Math.sin(branchAngle + spinAngle) * r + randomZ;
 
       pos[i * 3] = x;
       pos[i * 3 + 1] = y;
       pos[i * 3 + 2] = z;
 
-      // Color interpolation: Core -> Mid Arms -> Outer Halo
+      // Color interpolation along galactic radius
       const mixedColor = new THREE.Color();
-      if (rRatio < 0.3) {
-        mixedColor.copy(cInside).lerp(cMid, rRatio / 0.3);
+      if (rRatio < 0.28) {
+        mixedColor.copy(cInside).lerp(cMid, rRatio / 0.28);
       } else {
-        mixedColor.copy(cMid).lerp(cOutside, (rRatio - 0.3) / 0.7);
+        mixedColor.copy(cMid).lerp(cOutside, (rRatio - 0.28) / 0.72);
       }
 
-      // Add occasional bright white star bursts
-      if (Math.random() < 0.08) {
+      // Add brilliant white & electric star clusters
+      if (Math.random() < 0.12) {
         mixedColor.set('#EDF5FF');
+      } else if (Math.random() < 0.05) {
+        mixedColor.set('#38BDF8');
       }
 
       col[i * 3] = mixedColor.r;
       col[i * 3 + 1] = mixedColor.g;
       col[i * 3 + 2] = mixedColor.b;
 
-      // Scale: core stars are slightly larger and brighter
-      scl[i] = rRatio < 0.15 ? Math.random() * 2.8 + 2.0 : Math.random() * 2.0 + 1.0;
+      // Core stars are larger and brighter
+      scl[i] = rRatio < 0.12 ? Math.random() * 3.2 + 2.4 : Math.random() * 2.2 + 1.2;
     }
 
     return {
@@ -92,7 +93,7 @@ const SpiralGalaxy3D: React.FC<SpiralGalaxyProps> = ({
     };
   }, [particleCount, radius, branches, spin, randomness, insideColor, midColor, outsideColor]);
 
-  // Shader material for crisp glowing circular stars
+  // Shader material for radiant glowing circular stars
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       vertexShader: `
@@ -106,20 +107,19 @@ const SpiralGalaxy3D: React.FC<SpiralGalaxyProps> = ({
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           gl_Position = projectionMatrix * mvPosition;
           
-          gl_PointSize = aScale * uPixelRatio * (280.0 / -mvPosition.z);
-          gl_PointSize = max(gl_PointSize, 1.2);
+          gl_PointSize = aScale * uPixelRatio * (290.0 / -mvPosition.z);
+          gl_PointSize = max(gl_PointSize, 1.4);
         }
       `,
       fragmentShader: `
         varying vec3 vColor;
 
         void main() {
-          // Circular particle with soft radiant edge
           float dist = length(gl_PointCoord - vec2(0.5));
           if (dist > 0.5) discard;
           
-          float alpha = pow(1.0 - dist * 2.0, 1.6);
-          gl_FragColor = vec4(vColor, alpha * 0.92);
+          float alpha = pow(1.0 - dist * 2.0, 1.5);
+          gl_FragColor = vec4(vColor, alpha * 0.95);
         }
       `,
       uniforms: {
@@ -133,39 +133,41 @@ const SpiralGalaxy3D: React.FC<SpiralGalaxyProps> = ({
 
   useFrame((state, delta) => {
     if (pointsRef.current) {
-      // Constant cinematic galactic rotation
-      pointsRef.current.rotation.y += delta * 0.045;
+      // Natural continuous galactic rotation
+      pointsRef.current.rotation.y += delta * 0.05;
     }
     if (coreGlowRef.current) {
-      // Core pulse
       const t = state.clock.getElapsedTime();
-      const s = 1.0 + Math.sin(t * 1.8) * 0.08;
+      const s = 1.0 + Math.sin(t * 2.0) * 0.08;
       coreGlowRef.current.scale.set(s, s, s);
-      coreGlowRef.current.rotation.y += delta * 0.06;
+    }
+    if (coreOuterGlowRef.current) {
+      const t = state.clock.getElapsedTime();
+      const s = 1.0 + Math.cos(t * 1.5) * 0.1;
+      coreOuterGlowRef.current.scale.set(s, s, s);
     }
   });
 
   return (
-    // Tilt the galaxy plane (X-axis ~ 58 degrees, Z-axis slight roll) for stunning perspective
-    <group rotation={[-Math.PI / 3.0, 0.15, -Math.PI / 10]} position={[0, -10, -40]}>
-      {/* Central Supermassive Core Bulge */}
+    <group ref={groupRef} rotation={[-Math.PI / 3.0, 0.12, -Math.PI / 10]} position={[0, -10, -35]}>
+      {/* Brilliant Galactic Nucleus */}
       <mesh ref={coreGlowRef}>
-        <sphereGeometry args={[14, 24, 24]} />
+        <sphereGeometry args={[15, 24, 24]} />
         <meshBasicMaterial
-          color="#FFF5D6"
+          color="#FFF6D6"
           transparent
-          opacity={0.35}
+          opacity={0.4}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
 
-      {/* Secondary Core Corona */}
-      <mesh scale={1.8}>
-        <sphereGeometry args={[16, 24, 24]} />
+      {/* Radiant Cyan Corona */}
+      <mesh ref={coreOuterGlowRef} scale={1.8}>
+        <sphereGeometry args={[17, 24, 24]} />
         <meshBasicMaterial
           color="#48D7FF"
           transparent
-          opacity={0.12}
+          opacity={0.16}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
@@ -184,9 +186,9 @@ const SpiralGalaxy3D: React.FC<SpiralGalaxyProps> = ({
 };
 
 /**
- * Distant Isotropic Deep-Space Starfield
+ * Distant Deep-Space Stars with twinkling
  */
-const DistantCosmicField: React.FC<{ count?: number; radius?: number }> = ({ count = 2000, radius = 550 }) => {
+const DistantCosmicField: React.FC<{ count?: number; radius?: number }> = ({ count = 2500, radius = 600 }) => {
   const pointsRef = useRef<THREE.Points>(null);
 
   const { positions, colors, sizes } = useMemo(() => {
@@ -198,7 +200,8 @@ const DistantCosmicField: React.FC<{ count?: number; radius?: number }> = ({ cou
       new THREE.Color('#EDF5FF'),
       new THREE.Color('#93C5FD'),
       new THREE.Color('#48D7FF'),
-      new THREE.Color('#FEF08A')
+      new THREE.Color('#FEF08A'),
+      new THREE.Color('#FCA5A5')
     ];
 
     for (let i = 0; i < count; i++) {
@@ -206,7 +209,7 @@ const DistantCosmicField: React.FC<{ count?: number; radius?: number }> = ({ cou
       const v = Math.random();
       const theta = u * 2.0 * Math.PI;
       const phi = Math.acos(2.0 * v - 1.0);
-      const r = Math.cbrt(Math.random()) * radius + 150;
+      const r = Math.cbrt(Math.random()) * radius + 140;
 
       pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
       pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
@@ -217,7 +220,7 @@ const DistantCosmicField: React.FC<{ count?: number; radius?: number }> = ({ cou
       col[i * 3 + 1] = chosenColor.g;
       col[i * 3 + 2] = chosenColor.b;
 
-      sz[i] = Math.random() < 0.05 ? 2.5 : 1.2;
+      sz[i] = Math.random() < 0.08 ? 2.6 : 1.3;
     }
 
     return { positions: pos, colors: col, sizes: sz };
@@ -225,7 +228,7 @@ const DistantCosmicField: React.FC<{ count?: number; radius?: number }> = ({ cou
 
   useFrame((_, delta) => {
     if (pointsRef.current) {
-      pointsRef.current.rotation.y += delta * 0.005;
+      pointsRef.current.rotation.y += delta * 0.006;
     }
   });
 
@@ -236,10 +239,10 @@ const DistantCosmicField: React.FC<{ count?: number; radius?: number }> = ({ cou
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
       <pointsMaterial
-        size={1.5}
+        size={1.6}
         vertexColors
         transparent
-        opacity={0.7}
+        opacity={0.75}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
       />
@@ -247,64 +250,120 @@ const DistantCosmicField: React.FC<{ count?: number; radius?: number }> = ({ cou
   );
 };
 
-const CameraParallaxRig: React.FC<{ reducedMotion?: boolean }> = ({ reducedMotion }) => {
+/**
+ * Camera Controller that actively responds to:
+ * 1. Cursor Movement (smooth interactive parallax & 3D tilt)
+ * 2. Scroll Progression (camera travels deeper into space & pivots viewing angle)
+ */
+const InteractiveParallaxAndScrollRig: React.FC<{ reducedMotion?: boolean }> = ({ reducedMotion }) => {
   const mouse = useRef({ x: 0, y: 0 });
+  const scrollFraction = useRef(0);
+  const cursorLightRef = useRef<THREE.PointLight>(null);
 
   useEffect(() => {
     if (reducedMotion) return;
 
+    // Track cursor movement across window
     const handlePointerMove = (e: MouseEvent) => {
-      mouse.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouse.current.x = (e.clientX / window.innerWidth - 0.5) * 2; // -1 to +1
       mouse.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
     };
 
+    // Track scroll progression down the page
+    const handleScroll = () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (maxScroll > 0) {
+        scrollFraction.current = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+      }
+    };
+
     window.addEventListener('mousemove', handlePointerMove, { passive: true });
-    return () => window.removeEventListener('mousemove', handlePointerMove);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Initial check
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [reducedMotion]);
 
   useFrame((state) => {
     if (reducedMotion) return;
-    const targetX = mouse.current.x * 20;
-    const targetY = -mouse.current.y * 15;
 
-    state.camera.position.x += (targetX - state.camera.position.x) * 0.035;
-    state.camera.position.y += (targetY - state.camera.position.y) * 0.035;
-    state.camera.lookAt(0, 0, -30);
+    const scroll = scrollFraction.current;
+    const mx = mouse.current.x;
+    const my = mouse.current.y;
+
+    // Dynamic camera target based on cursor AND scroll position
+    // As you scroll down, camera moves down, zooms in closer (Z travels from 195 to 145), and rotates!
+    const targetCamX = mx * 35;
+    const targetCamY = 45 - my * 25 - scroll * 40;
+    const targetCamZ = 195 - scroll * 50;
+
+    // Smooth lerp camera position
+    state.camera.position.x += (targetCamX - state.camera.position.x) * 0.045;
+    state.camera.position.y += (targetCamY - state.camera.position.y) * 0.045;
+    state.camera.position.z += (targetCamZ - state.camera.position.z) * 0.045;
+
+    // Look target pivots slightly with scroll and mouse
+    const lookTargetY = -25 - scroll * 20;
+    const lookTargetX = mx * 10;
+    state.camera.lookAt(lookTargetX, lookTargetY, -35);
+
+    // Interactive cursor spotlight that follows mouse in 3D space
+    if (cursorLightRef.current) {
+      cursorLightRef.current.position.x = mx * 80;
+      cursorLightRef.current.position.y = -my * 60 + 20;
+      cursorLightRef.current.position.z = 40;
+    }
   });
 
-  return null;
+  return (
+    <pointLight
+      ref={cursorLightRef}
+      position={[0, 0, 40]}
+      intensity={1.2}
+      color="#48D7FF"
+      distance={260}
+    />
+  );
 };
 
 export const GalaxyBackground: React.FC = () => {
   const { preferences } = useUserPreferences();
-  const particleCount = preferences.graphicsQuality === 'high' ? 8500 : preferences.graphicsQuality === 'medium' ? 5000 : 2500;
+  const particleCount = preferences.graphicsQuality === 'high' ? 9500 : preferences.graphicsQuality === 'medium' ? 6000 : 3000;
 
   return (
     <div className="fixed inset-0 pointer-events-none -z-10 bg-[#030611] overflow-hidden">
       <Canvas
-        camera={{ position: [0, 45, 190], fov: 60 }}
+        camera={{ position: [0, 45, 195], fov: 60 }}
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
         dpr={typeof window !== 'undefined' ? [1, Math.min(window.devicePixelRatio, 1.75)] : 1}
       >
         <color attach="background" args={['#030611']} />
-        <CameraParallaxRig reducedMotion={preferences.reducedMotion} />
+        
+        {/* Interactive Cursor and Scroll Rig */}
+        <InteractiveParallaxAndScrollRig reducedMotion={preferences.reducedMotion} />
 
         {/* Ambient Cosmic Core Lights */}
-        <pointLight position={[0, 0, -40]} intensity={2.2} color="#FFF5D6" distance={300} />
-        <pointLight position={[50, 30, -20]} intensity={1.5} color="#48D7FF" distance={250} />
+        <pointLight position={[0, -10, -35]} intensity={2.8} color="#FFF5D6" distance={350} />
+        <pointLight position={[60, 25, -20]} intensity={1.8} color="#48D7FF" distance={300} />
+        <pointLight position={[-60, -25, -20]} intensity={1.6} color="#8B5CF6" distance={300} />
 
-        {/* 3D Rotating Spiral Galaxy (Main Feature) */}
-        <SpiralGalaxy3D particleCount={particleCount} radius={210} branches={3} spin={1.3} />
+        {/* 3D Rotating Spiral Galaxy (Main Moving Feature) */}
+        <SpiralGalaxy3D particleCount={particleCount} radius={230} branches={3} spin={1.35} />
 
-        {/* Deep Field Stars */}
-        <DistantCosmicField count={Math.floor(particleCount * 0.35)} radius={550} />
+        {/* Deep Field Twinkling Stars */}
+        <DistantCosmicField count={Math.floor(particleCount * 0.35)} radius={600} />
       </Canvas>
 
-      {/* Atmospheric Vignette & Contrast Overlay */}
+      {/* Subtle Vignette that leaves the core luminous while keeping text readable */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(circle at 50% 45%, transparent 25%, rgba(3, 6, 17, 0.45) 65%, rgba(3, 6, 17, 0.92) 100%)'
+          background: 'radial-gradient(circle at 50% 42%, transparent 20%, rgba(3, 6, 17, 0.4) 65%, rgba(3, 6, 17, 0.9) 100%)'
         }}
       />
     </div>
