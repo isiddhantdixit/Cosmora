@@ -58,14 +58,14 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Massive Agency Heading */}
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold font-display tracking-tight text-[#EDF5FF] leading-[1.08]">
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold font-display tracking-tight text-[#EDF5FF] leading-[1.08] drop-shadow-[0_4px_24px_rgba(3,6,17,0.95)]">
           The Universe, <br />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#48D7FF] via-[#3B82F6] to-[#8B5CF6]">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#48D7FF] via-[#60A5FA] to-[#A78BFA] drop-shadow-sm">
             Around You.
           </span>
         </h1>
 
-        <p className="text-base sm:text-lg md:text-xl text-[#9EACC4] max-w-2xl font-normal leading-relaxed">
+        <p className="text-base sm:text-lg md:text-xl text-[#B4C2D8] max-w-2xl font-normal leading-relaxed drop-shadow-[0_2px_12px_rgba(3,6,17,0.9)]">
           Point your device at the night sky to identify stars, planets, and constellations in real-time augmented reality—or step inside our scientifically accurate interactive 3D universe.
         </p>
 
