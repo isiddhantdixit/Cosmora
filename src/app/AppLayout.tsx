@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from '../components/navigation/Header';
 import { MobileNav } from '../components/navigation/MobileNav';
 import { GalaxyBackground } from '../three/scenes/GalaxyBackground';
+import { LocationPromptModal } from '../components/ui/LocationPromptModal';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
@@ -18,6 +19,9 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Top Header Navigation */}
       {!isCompanion && <Header />}
+
+      {/* Coordinate & AR Calibration Prompt on Site Launch */}
+      {!isCompanion && <LocationPromptModal />}
 
       {/* Page Content Outlet */}
       <main className="flex-1 w-full relative z-10">

@@ -115,9 +115,8 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0">
             {/* Observer Location Context */}
             <button
-              onClick={() => detectGeolocation()}
-              title="Click to refresh GPS coordinates"
-              disabled={isLocating}
+              onClick={() => window.dispatchEvent(new CustomEvent('cosmora:open-location-prompt'))}
+              title="Click to calibrate GPS coordinates and local horizon"
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-panel-subtle text-xs font-mono text-[#9EACC4] hover:text-[#EDF5FF] hover:border-[#48D7FF]/30 transition-all cursor-pointer"
             >
               <MapPin className={`w-3.5 h-3.5 ${isLocating ? 'animate-bounce text-[#48D7FF]' : 'text-[#48D7FF]'}`} />
