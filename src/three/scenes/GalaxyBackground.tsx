@@ -107,8 +107,8 @@ const SpiralGalaxy3D: React.FC<SpiralGalaxyProps> = ({
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           gl_Position = projectionMatrix * mvPosition;
           
-          gl_PointSize = aScale * uPixelRatio * (290.0 / -mvPosition.z);
-          gl_PointSize = max(gl_PointSize, 1.4);
+          gl_PointSize = aScale * uPixelRatio * (380.0 / -mvPosition.z);
+          gl_PointSize = max(gl_PointSize, 2.2);
         }
       `,
       fragmentShader: `
@@ -118,8 +118,8 @@ const SpiralGalaxy3D: React.FC<SpiralGalaxyProps> = ({
           float dist = length(gl_PointCoord - vec2(0.5));
           if (dist > 0.5) discard;
           
-          float alpha = pow(1.0 - dist * 2.0, 1.5);
-          gl_FragColor = vec4(vColor, alpha * 0.95);
+          float alpha = pow(1.0 - dist * 2.0, 1.2);
+          gl_FragColor = vec4(vColor, alpha);
         }
       `,
       uniforms: {
@@ -298,24 +298,24 @@ const InteractiveParallaxAndScrollRig: React.FC<{ reducedMotion?: boolean }> = (
 
     // Dynamic camera target based on cursor AND scroll position
     // As you scroll down, camera moves down, zooms in closer (Z travels from 195 to 145), and rotates!
-    const targetCamX = mx * 35;
-    const targetCamY = 45 - my * 25 - scroll * 40;
-    const targetCamZ = 195 - scroll * 50;
+    const targetCamX = mx * 45;
+    const targetCamY = 25 - my * 30 - scroll * 55;
+    const targetCamZ = 165 - scroll * 65;
 
     // Smooth lerp camera position
-    state.camera.position.x += (targetCamX - state.camera.position.x) * 0.045;
-    state.camera.position.y += (targetCamY - state.camera.position.y) * 0.045;
-    state.camera.position.z += (targetCamZ - state.camera.position.z) * 0.045;
+    state.camera.position.x += (targetCamX - state.camera.position.x) * 0.055;
+    state.camera.position.y += (targetCamY - state.camera.position.y) * 0.055;
+    state.camera.position.z += (targetCamZ - state.camera.position.z) * 0.055;
 
     // Look target pivots slightly with scroll and mouse
-    const lookTargetY = -25 - scroll * 20;
-    const lookTargetX = mx * 10;
+    const lookTargetY = -20 - scroll * 25;
+    const lookTargetX = mx * 15;
     state.camera.lookAt(lookTargetX, lookTargetY, -35);
 
     // Interactive cursor spotlight that follows mouse in 3D space
     if (cursorLightRef.current) {
-      cursorLightRef.current.position.x = mx * 80;
-      cursorLightRef.current.position.y = -my * 60 + 20;
+      cursorLightRef.current.position.x = mx * 90;
+      cursorLightRef.current.position.y = -my * 70 + 20;
       cursorLightRef.current.position.z = 40;
     }
   });
@@ -324,23 +324,24 @@ const InteractiveParallaxAndScrollRig: React.FC<{ reducedMotion?: boolean }> = (
     <pointLight
       ref={cursorLightRef}
       position={[0, 0, 40]}
-      intensity={1.2}
+      intensity={1.5}
       color="#48D7FF"
-      distance={260}
+      distance={300}
     />
   );
 };
 
 export const GalaxyBackground: React.FC = () => {
   const { preferences } = useUserPreferences();
-  const particleCount = preferences.graphicsQuality === 'high' ? 9500 : preferences.graphicsQuality === 'medium' ? 6000 : 3000;
+  const particleCount = preferences.graphicsQuality === 'high' ? 12000 : preferences.graphicsQuality === 'medium' ? 8500 : 4500;
 
   return (
-    <div className="fixed inset-0 pointer-events-none -z-10 bg-[#030611] overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
       <Canvas
-        camera={{ position: [0, 45, 195], fov: 60 }}
+        camera={{ position: [0, 25, 165], fov: 60 }}
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
         dpr={typeof window !== 'undefined' ? [1, Math.min(window.devicePixelRatio, 1.75)] : 1}
+        className="w-full h-full"
       >
         <color attach="background" args={['#030611']} />
         
@@ -348,22 +349,22 @@ export const GalaxyBackground: React.FC = () => {
         <InteractiveParallaxAndScrollRig reducedMotion={preferences.reducedMotion} />
 
         {/* Ambient Cosmic Core Lights */}
-        <pointLight position={[0, -10, -35]} intensity={2.8} color="#FFF5D6" distance={350} />
-        <pointLight position={[60, 25, -20]} intensity={1.8} color="#48D7FF" distance={300} />
-        <pointLight position={[-60, -25, -20]} intensity={1.6} color="#8B5CF6" distance={300} />
+        <pointLight position={[0, -10, -35]} intensity={3.2} color="#FFF5D6" distance={380} />
+        <pointLight position={[60, 25, -20]} intensity={2.2} color="#48D7FF" distance={320} />
+        <pointLight position={[-60, -25, -20]} intensity={2.0} color="#8B5CF6" distance={320} />
 
         {/* 3D Rotating Spiral Galaxy (Main Moving Feature) */}
-        <SpiralGalaxy3D particleCount={particleCount} radius={230} branches={3} spin={1.35} />
+        <SpiralGalaxy3D particleCount={particleCount} radius={240} branches={3} spin={1.35} />
 
         {/* Deep Field Twinkling Stars */}
         <DistantCosmicField count={Math.floor(particleCount * 0.35)} radius={600} />
       </Canvas>
 
-      {/* Subtle Vignette that leaves the core luminous while keeping text readable */}
+      {/* Gentle Edge Vignette that highlights the rotating core and arms */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(circle at 50% 42%, transparent 20%, rgba(3, 6, 17, 0.4) 65%, rgba(3, 6, 17, 0.9) 100%)'
+          background: 'radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(3, 6, 17, 0.45) 75%, rgba(3, 6, 17, 0.8) 100%)'
         }}
       />
     </div>
