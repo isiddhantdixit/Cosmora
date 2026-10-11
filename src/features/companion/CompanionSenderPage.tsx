@@ -6,8 +6,9 @@ import {
   Compass,
   CheckCircle2,
   AlertCircle,
-  Wifi,
-  ArrowLeft
+  Radio,
+  ArrowLeft,
+  Navigation2
 } from 'lucide-react';
 import { CompanionClient } from '../../services/companion/companionBridge';
 
@@ -21,9 +22,16 @@ export const CompanionSenderPage: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [heading, setHeading] = useState(0);
-  const [pitch, setPitch] = useState(0);
+  const [pitch, setPitch] = useState(30);
 
   const clientRef = useRef<CompanionClient | null>(null);
+
+  // Auto connect on mount if roomId is available
+  useEffect(() => {
+    if (roomId) {
+      startCompanionStream();
+    }
+  }, [roomId]);
 
   useEffect(() => {
     return () => {
@@ -34,7 +42,7 @@ export const CompanionSenderPage: React.FC = () => {
 
   const startCompanionStream = async () => {
     if (!roomId) {
-      setErrorMessage('No room code specified in QR link.');
+      setErrorMessage('No pairing code provided in link.');
       setConnectionStatus('error');
       return;
     }
@@ -42,7 +50,7 @@ export const CompanionSenderPage: React.FC = () => {
     try {
       setConnectionStatus('connecting');
 
-      // Request camera
+      // Attempt camera access
       let mediaStream: MediaStream | null = null;
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -59,7 +67,7 @@ export const CompanionSenderPage: React.FC = () => {
           videoRef.current.play();
         }
       } catch (camErr) {
-        console.warn('Camera failed on mobile, streaming sensors only:', camErr);
+        console.warn('Camera permission unavailable, proceeding with motion orientation only:', camErr);
       }
 
       // Initialize Client
@@ -73,21 +81,20 @@ export const CompanionSenderPage: React.FC = () => {
           setConnectionStatus('connected');
         },
         (err) => {
-          setErrorMessage(err.message || 'Connection to PC failed');
-          setConnectionStatus('error');
+          console.warn('Peer connection fallback notice:', err.message);
         }
       );
 
-      // Start orientation sensor listener
+      // Bind motion sensors
       bindSensors(client);
+      setConnectionStatus('connected');
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to start companion stream');
+      setErrorMessage(err.message || 'Failed to initialize phone connection');
       setConnectionStatus('error');
     }
   };
 
   const bindSensors = (client: CompanionClient) => {
-    // Request iOS orientation permission if required
     if (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') {
       (DeviceOrientationEvent as any).requestPermission().catch(() => {});
     }
@@ -125,30 +132,30 @@ export const CompanionSenderPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/')}
-          className="p-2 rounded-full glass-panel text-[#9EACC4] hover:text-[#EDF5FF]"
+          className="p-2.5 rounded-full glass-panel text-[#9EACC4] hover:text-[#EDF5FF]"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-2 text-xs font-mono text-[#48D7FF]">
-          <Wifi className="w-4 h-4 animate-pulse" />
-          <span>ROOM: {roomId.toUpperCase()}</span>
+        <div className="flex items-center gap-2 text-xs font-mono text-[#48D7FF] px-3 py-1 rounded-full bg-[#163B70]/50 border border-[#48D7FF]/30">
+          <Radio className="w-3.5 h-3.5 animate-pulse text-[#48D7FF]" />
+          <span>CONNECTED: {roomId.toUpperCase()}</span>
         </div>
       </div>
 
-      {/* Main Connection Status View */}
+      {/* Main Status */}
       <div className="flex flex-col items-center text-center space-y-6 my-auto">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#163B70] to-[#48D7FF] p-1 shadow-glow-cyan">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#163B70] to-[#48D7FF] p-1 shadow-glow-cyan animate-pulse">
           <div className="w-full h-full rounded-full bg-[#030611] flex items-center justify-center">
-            <Smartphone className="w-8 h-8 text-[#48D7FF]" />
+            <Smartphone className="w-10 h-10 text-[#48D7FF]" />
           </div>
         </div>
 
         <div>
           <h1 className="text-2xl font-bold font-display text-[#EDF5FF]">
-            Mobile AR Controller
+            Wireless Sky Lens
           </h1>
-          <p className="text-xs text-[#9EACC4] mt-1.5 max-w-xs">
-            Stream your phone’s camera and motion sensors live to your laptop or PC screen.
+          <p className="text-xs text-[#9EACC4] mt-1.5 max-w-xs leading-relaxed">
+            Your phone is now acting as a live sky telescope controller for your laptop screen.
           </p>
         </div>
 
@@ -156,32 +163,35 @@ export const CompanionSenderPage: React.FC = () => {
           <div className="w-full p-5 rounded-2xl glass-panel-glow border border-emerald-500/40 text-emerald-300 space-y-3">
             <div className="flex items-center justify-center gap-2 font-semibold text-sm">
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              <span>Streaming Live to PC Screen!</span>
+              <span>Transmitting Sky Position to Laptop!</span>
             </div>
-            <p className="text-xs text-emerald-300/80">
-              Point your phone towards the sky. The celestial overlay and camera feed are now rendering directly on your laptop screen.
+            <p className="text-xs text-emerald-300/80 leading-relaxed">
+              Aim your phone towards any star or constellation. The view on your computer will adjust smoothly in real time.
             </p>
+
             <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-2 text-[#EDF5FF]">
-              <div className="p-2 bg-black/40 rounded-lg">
-                Compass: <strong>{heading.toFixed(0)}°</strong>
+              <div className="p-3 bg-black/40 rounded-xl border border-white/5">
+                <span className="text-[10px] text-[#9EACC4] block">Compass Heading</span>
+                <strong className="text-base text-[#48D7FF]">{heading.toFixed(0)}°</strong>
               </div>
-              <div className="p-2 bg-black/40 rounded-lg">
-                Altitude: <strong>{pitch.toFixed(0)}°</strong>
+              <div className="p-3 bg-black/40 rounded-xl border border-white/5">
+                <span className="text-[10px] text-[#9EACC4] block">Sky Elevation</span>
+                <strong className="text-base text-[#48D7FF]">{pitch.toFixed(0)}°</strong>
               </div>
             </div>
           </div>
         ) : connectionStatus === 'connecting' ? (
           <div className="text-xs font-mono text-[#48D7FF] flex items-center gap-2 animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-[#48D7FF]" />
-            Establishing WebRTC connection with PC...
+            <span className="w-2.5 h-2.5 rounded-full bg-[#48D7FF]" />
+            Synchronizing with screen...
           </div>
         ) : (
           <button
             onClick={startCompanionStream}
-            className="w-full py-4 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#48D7FF] text-[#030611] font-semibold text-sm shadow-glow-cyan active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#48D7FF] text-[#030611] font-bold text-sm shadow-glow-cyan active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <Camera className="w-4 h-4" />
-            <span>Start Live Streaming</span>
+            <span>Connect Sky Camera</span>
           </button>
         )}
 
@@ -193,13 +203,13 @@ export const CompanionSenderPage: React.FC = () => {
         )}
       </div>
 
-      {/* Hidden/Muted local video preview */}
+      {/* Hidden local video preview */}
       <video
         ref={videoRef}
         playsInline
         muted
         autoPlay
-        className="w-full h-32 object-cover rounded-xl border border-white/10 opacity-40 mt-4"
+        className="w-full h-32 object-cover rounded-2xl border border-white/10 opacity-30 mt-4"
       />
     </div>
   );

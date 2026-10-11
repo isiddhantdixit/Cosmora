@@ -1,172 +1,249 @@
 import React, { useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { StarShaderMaterial, NebulaShaderMaterial } from '../shaders/galaxyShaders';
 import { useUserPreferences } from '../../app/providers/UserPreferencesProvider';
 
-interface StarFieldProps {
-  count?: number;
+interface SpiralGalaxyProps {
+  particleCount?: number;
   radius?: number;
+  branches?: number;
+  spin?: number;
+  randomness?: number;
+  insideColor?: string;
+  midColor?: string;
+  outsideColor?: string;
 }
 
-const ProceduralStarField: React.FC<StarFieldProps> = ({ count = 3500, radius = 600 }) => {
+/**
+ * Procedural 3D Logarithmic Spiral Galaxy
+ * Generates an authentic rotating pinwheel galaxy with a glowing core,
+ * distinct spiral arms, interstellar dust lanes, and spatial depth.
+ */
+const SpiralGalaxy3D: React.FC<SpiralGalaxyProps> = ({
+  particleCount = 7500,
+  radius = 220,
+  branches = 3,
+  spin = 1.35,
+  randomness = 0.42,
+  insideColor = '#FFF4D0',  // Warm brilliant stellar core
+  midColor = '#48D7FF',     // Electric cyan spiral arms
+  outsideColor = '#8B5CF6'  // Deep cosmic violet outer fringe
+}) => {
   const pointsRef = useRef<THREE.Points>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const coreGlowRef = useRef<THREE.Mesh>(null);
 
-  const { positions, colors, sizes, twinkleSpeeds } = useMemo(() => {
-    const pos = new Float32Array(count * 3);
-    const col = new Float32Array(count * 3);
-    const sz = new Float32Array(count);
-    const tw = new Float32Array(count);
+  const { positions, colors, scales } = useMemo(() => {
+    const pos = new Float32Array(particleCount * 3);
+    const col = new Float32Array(particleCount * 3);
+    const scl = new Float32Array(particleCount);
 
-    const palette = [
-      new THREE.Color('#EDF5FF'), // Soft white
-      new THREE.Color('#48D7FF'), // Cyan
-      new THREE.Color('#93C5FD'), // Blue
-      new THREE.Color('#FEF08A'), // Yellow
-      new THREE.Color('#FCA5A5'), // Reddish
-      new THREE.Color('#C4B5FD')  // Soft violet
-    ];
+    const cInside = new THREE.Color(insideColor);
+    const cMid = new THREE.Color(midColor);
+    const cOutside = new THREE.Color(outsideColor);
 
-    for (let i = 0; i < count; i++) {
-      // 65% in galactic disc disk, 35% isotropic halo
-      const inDisk = Math.random() < 0.65;
-      let x = 0, y = 0, z = 0;
+    for (let i = 0; i < particleCount; i++) {
+      // Distance from center: higher density at core
+      const rRatio = Math.pow(Math.random(), 1.7);
+      const r = rRatio * radius;
 
-      if (inDisk) {
-        // Disk distribution inclined at 30 degrees
-        const r = (Math.random() * 0.85 + 0.15) * radius;
-        const theta = Math.random() * Math.PI * 2;
-        const h = (Math.random() - 0.5) * (radius * 0.15); // thin disk height
+      // Branch angle for spiral arms
+      const branchAngle = ((i % branches) / branches) * Math.PI * 2;
+      const spinAngle = r * (spin / 100);
 
-        // Rotated plane
-        x = r * Math.cos(theta);
-        y = r * Math.sin(theta) * 0.5 + h;
-        z = r * Math.sin(theta) * 0.866 + h;
-      } else {
-        // Spherical halo
-        const u = Math.random();
-        const v = Math.random();
-        const theta = u * 2.0 * Math.PI;
-        const phi = Math.acos(2.0 * v - 1.0);
-        const r = Math.cbrt(Math.random()) * radius;
+      // Random scatter off the spiral spine (decreases towards center)
+      const randomPower = 2.4;
+      const randomX = Math.pow(Math.random(), randomPower) * (Math.random() < 0.5 ? 1 : -1) * randomness * r;
+      const randomY = Math.pow(Math.random(), randomPower) * (Math.random() < 0.5 ? 1 : -1) * (randomness * 0.4) * r; // Disk thickness
+      const randomZ = Math.pow(Math.random(), randomPower) * (Math.random() < 0.5 ? 1 : -1) * randomness * r;
 
-        x = r * Math.sin(phi) * Math.cos(theta);
-        y = r * Math.sin(phi) * Math.sin(theta);
-        z = r * Math.cos(phi);
-      }
+      const x = Math.cos(branchAngle + spinAngle) * r + randomX;
+      const y = randomY; // disk vertical axis
+      const z = Math.sin(branchAngle + spinAngle) * r + randomZ;
 
       pos[i * 3] = x;
       pos[i * 3 + 1] = y;
       pos[i * 3 + 2] = z;
 
-      // Color selection
-      const chosenColor = palette[Math.floor(Math.random() * palette.length)];
-      col[i * 3] = chosenColor.r;
-      col[i * 3 + 1] = chosenColor.g;
-      col[i * 3 + 2] = chosenColor.b;
+      // Color interpolation: Core -> Mid Arms -> Outer Halo
+      const mixedColor = new THREE.Color();
+      if (rRatio < 0.3) {
+        mixedColor.copy(cInside).lerp(cMid, rRatio / 0.3);
+      } else {
+        mixedColor.copy(cMid).lerp(cOutside, (rRatio - 0.3) / 0.7);
+      }
 
-      // Sizes (most small, few bright giants)
-      const sizeRand = Math.random();
-      sz[i] = sizeRand > 0.95 ? 4.5 : sizeRand > 0.8 ? 2.8 : 1.4;
+      // Add occasional bright white star bursts
+      if (Math.random() < 0.08) {
+        mixedColor.set('#EDF5FF');
+      }
 
-      // Twinkle speed
-      tw[i] = 0.5 + Math.random() * 2.5;
+      col[i * 3] = mixedColor.r;
+      col[i * 3 + 1] = mixedColor.g;
+      col[i * 3 + 2] = mixedColor.b;
+
+      // Scale: core stars are slightly larger and brighter
+      scl[i] = rRatio < 0.15 ? Math.random() * 2.8 + 2.0 : Math.random() * 2.0 + 1.0;
     }
 
     return {
       positions: pos,
       colors: col,
-      sizes: sz,
-      twinkleSpeeds: tw
+      scales: scl
     };
-  }, [count, radius]);
+  }, [particleCount, radius, branches, spin, randomness, insideColor, midColor, outsideColor]);
+
+  // Shader material for crisp glowing circular stars
+  const shaderMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      vertexShader: `
+        attribute float aScale;
+        attribute vec3 aColor;
+        varying vec3 vColor;
+        uniform float uPixelRatio;
+
+        void main() {
+          vColor = aColor;
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+          
+          gl_PointSize = aScale * uPixelRatio * (280.0 / -mvPosition.z);
+          gl_PointSize = max(gl_PointSize, 1.2);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vColor;
+
+        void main() {
+          // Circular particle with soft radiant edge
+          float dist = length(gl_PointCoord - vec2(0.5));
+          if (dist > 0.5) discard;
+          
+          float alpha = pow(1.0 - dist * 2.0, 1.6);
+          gl_FragColor = vec4(vColor, alpha * 0.92);
+        }
+      `,
+      uniforms: {
+        uPixelRatio: { value: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 2) : 1 }
+      },
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+  }, []);
 
   useFrame((state, delta) => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = state.clock.getElapsedTime();
-    }
     if (pointsRef.current) {
-      // Very slow natural galactic drift
-      pointsRef.current.rotation.y += delta * 0.008;
-      pointsRef.current.rotation.x += delta * 0.003;
+      // Constant cinematic galactic rotation
+      pointsRef.current.rotation.y += delta * 0.045;
+    }
+    if (coreGlowRef.current) {
+      // Core pulse
+      const t = state.clock.getElapsedTime();
+      const s = 1.0 + Math.sin(t * 1.8) * 0.08;
+      coreGlowRef.current.scale.set(s, s, s);
+      coreGlowRef.current.rotation.y += delta * 0.06;
     }
   });
 
-  const uniforms = useMemo(() => ({
-    uTime: { value: 0 },
-    uPixelRatio: { value: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 2) : 1 }
-  }), []);
+  return (
+    // Tilt the galaxy plane (X-axis ~ 58 degrees, Z-axis slight roll) for stunning perspective
+    <group rotation={[-Math.PI / 3.0, 0.15, -Math.PI / 10]} position={[0, -10, -40]}>
+      {/* Central Supermassive Core Bulge */}
+      <mesh ref={coreGlowRef}>
+        <sphereGeometry args={[14, 24, 24]} />
+        <meshBasicMaterial
+          color="#FFF5D6"
+          transparent
+          opacity={0.35}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Secondary Core Corona */}
+      <mesh scale={1.8}>
+        <sphereGeometry args={[16, 24, 24]} />
+        <meshBasicMaterial
+          color="#48D7FF"
+          transparent
+          opacity={0.12}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* 3D Spiral Points System */}
+      <points ref={pointsRef}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+          <bufferAttribute attach="attributes-aColor" args={[colors, 3]} />
+          <bufferAttribute attach="attributes-aScale" args={[scales, 1]} />
+        </bufferGeometry>
+        <primitive object={shaderMaterial} attach="material" />
+      </points>
+    </group>
+  );
+};
+
+/**
+ * Distant Isotropic Deep-Space Starfield
+ */
+const DistantCosmicField: React.FC<{ count?: number; radius?: number }> = ({ count = 2000, radius = 550 }) => {
+  const pointsRef = useRef<THREE.Points>(null);
+
+  const { positions, colors, sizes } = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    const col = new Float32Array(count * 3);
+    const sz = new Float32Array(count);
+
+    const palette = [
+      new THREE.Color('#EDF5FF'),
+      new THREE.Color('#93C5FD'),
+      new THREE.Color('#48D7FF'),
+      new THREE.Color('#FEF08A')
+    ];
+
+    for (let i = 0; i < count; i++) {
+      const u = Math.random();
+      const v = Math.random();
+      const theta = u * 2.0 * Math.PI;
+      const phi = Math.acos(2.0 * v - 1.0);
+      const r = Math.cbrt(Math.random()) * radius + 150;
+
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = r * Math.cos(phi);
+
+      const chosenColor = palette[Math.floor(Math.random() * palette.length)];
+      col[i * 3] = chosenColor.r;
+      col[i * 3 + 1] = chosenColor.g;
+      col[i * 3 + 2] = chosenColor.b;
+
+      sz[i] = Math.random() < 0.05 ? 2.5 : 1.2;
+    }
+
+    return { positions: pos, colors: col, sizes: sz };
+  }, [count, radius]);
+
+  useFrame((_, delta) => {
+    if (pointsRef.current) {
+      pointsRef.current.rotation.y += delta * 0.005;
+    }
+  });
 
   return (
     <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
-        <bufferAttribute
-          attach="attributes-aColor"
-          args={[colors, 3]}
-        />
-        <bufferAttribute
-          attach="attributes-aSize"
-          args={[sizes, 1]}
-        />
-        <bufferAttribute
-          attach="attributes-aTwinkleSpeed"
-          args={[twinkleSpeeds, 1]}
-        />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <shaderMaterial
-        ref={materialRef}
-        vertexShader={StarShaderMaterial.vertexShader}
-        fragmentShader={StarShaderMaterial.fragmentShader}
-        uniforms={uniforms}
+      <pointsMaterial
+        size={1.5}
+        vertexColors
         transparent
-        depthWrite={false}
+        opacity={0.7}
         blending={THREE.AdditiveBlending}
+        depthWrite={false}
       />
     </points>
-  );
-};
-
-const VolumetricNebulaPlane: React.FC<{
-  position: [number, number, number];
-  colorA: string;
-  colorB: string;
-  opacity: number;
-  size: number;
-}> = ({ position, colorA, colorB, opacity, size }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const matRef = useRef<THREE.ShaderMaterial>(null);
-
-  const uniforms = useMemo(() => ({
-    uTime: { value: 0 },
-    uColorA: { value: new THREE.Color(colorA) },
-    uColorB: { value: new THREE.Color(colorB) },
-    uOpacity: { value: opacity }
-  }), [colorA, colorB, opacity]);
-
-  useFrame((state) => {
-    if (matRef.current) {
-      matRef.current.uniforms.uTime.value = state.clock.getElapsedTime();
-    }
-  });
-
-  return (
-    <mesh ref={meshRef} position={position}>
-      <planeGeometry args={[size, size, 16, 16]} />
-      <shaderMaterial
-        ref={matRef}
-        vertexShader={NebulaShaderMaterial.vertexShader}
-        fragmentShader={NebulaShaderMaterial.fragmentShader}
-        uniforms={uniforms}
-        transparent
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-      />
-    </mesh>
   );
 };
 
@@ -187,12 +264,12 @@ const CameraParallaxRig: React.FC<{ reducedMotion?: boolean }> = ({ reducedMotio
 
   useFrame((state) => {
     if (reducedMotion) return;
-    const targetX = mouse.current.x * 25;
-    const targetY = -mouse.current.y * 20;
+    const targetX = mouse.current.x * 20;
+    const targetY = -mouse.current.y * 15;
 
-    state.camera.position.x += (targetX - state.camera.position.x) * 0.03;
-    state.camera.position.y += (targetY - state.camera.position.y) * 0.03;
-    state.camera.lookAt(0, 0, 0);
+    state.camera.position.x += (targetX - state.camera.position.x) * 0.035;
+    state.camera.position.y += (targetY - state.camera.position.y) * 0.035;
+    state.camera.lookAt(0, 0, -30);
   });
 
   return null;
@@ -200,49 +277,35 @@ const CameraParallaxRig: React.FC<{ reducedMotion?: boolean }> = ({ reducedMotio
 
 export const GalaxyBackground: React.FC = () => {
   const { preferences } = useUserPreferences();
-  const starCount = preferences.graphicsQuality === 'high' ? 4500 : preferences.graphicsQuality === 'medium' ? 2500 : 1200;
+  const particleCount = preferences.graphicsQuality === 'high' ? 8500 : preferences.graphicsQuality === 'medium' ? 5000 : 2500;
 
   return (
     <div className="fixed inset-0 pointer-events-none -z-10 bg-[#030611] overflow-hidden">
       <Canvas
-        camera={{ position: [0, 0, 250], fov: 60 }}
+        camera={{ position: [0, 45, 190], fov: 60 }}
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
         dpr={typeof window !== 'undefined' ? [1, Math.min(window.devicePixelRatio, 1.75)] : 1}
       >
         <color attach="background" args={['#030611']} />
         <CameraParallaxRig reducedMotion={preferences.reducedMotion} />
-        
-        {/* Layer 1: Distant Galaxy Starfield */}
-        <ProceduralStarField count={starCount} radius={700} />
-        
-        {/* Layer 2: Close Atmospheric Cosmic Dust */}
-        <ProceduralStarField count={Math.floor(starCount * 0.15)} radius={280} />
 
-        {/* Volumetric Nebulae: Cyan & Deep Violet clouds */}
-        {preferences.showAtmosphereGlow && (
-          <>
-            <VolumetricNebulaPlane
-              position={[80, -40, -120]}
-              colorA="#163B70"
-              colorB="#48D7FF"
-              opacity={0.32}
-              size={360}
-            />
-            <VolumetricNebulaPlane
-              position={[-120, 60, -180]}
-              colorA="#3B82F6"
-              colorB="#8B5CF6"
-              opacity={0.28}
-              size={420}
-            />
-          </>
-        )}
+        {/* Ambient Cosmic Core Lights */}
+        <pointLight position={[0, 0, -40]} intensity={2.2} color="#FFF5D6" distance={300} />
+        <pointLight position={[50, 30, -20]} intensity={1.5} color="#48D7FF" distance={250} />
+
+        {/* 3D Rotating Spiral Galaxy (Main Feature) */}
+        <SpiralGalaxy3D particleCount={particleCount} radius={210} branches={3} spin={1.3} />
+
+        {/* Deep Field Stars */}
+        <DistantCosmicField count={Math.floor(particleCount * 0.35)} radius={550} />
       </Canvas>
-      {/* Subtle vignette gradient overlay */}
-      <div className="absolute inset-0 bg-radial-vignette pointer-events-none" 
-           style={{
-             background: 'radial-gradient(circle at center, transparent 30%, rgba(3, 6, 17, 0.6) 80%, rgba(3, 6, 17, 0.95) 100%)'
-           }}
+
+      {/* Atmospheric Vignette & Contrast Overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at 50% 45%, transparent 25%, rgba(3, 6, 17, 0.45) 65%, rgba(3, 6, 17, 0.92) 100%)'
+        }}
       />
     </div>
   );
