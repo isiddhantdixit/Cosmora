@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="nebula" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#48D7FF" />
+      <stop offset="50%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#030611" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#48D7FF" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="#030611" stroke="#163B70" stroke-width="2"/>
+  <circle cx="50" cy="50" r="30" fill="url(#nebula)" opacity="0.8"/>
+  <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="url(#ring)" stroke-width="2.5" transform="rotate(-25 50 50)"/>
+  <circle cx="50" cy="50" r="14" fill="#EDF5FF"/>
+  <circle cx="50" cy="50" r="11" fill="#071126"/>
+  <circle cx="46" cy="46" r="3" fill="#48D7FF"/>
+  <circle cx="70" cy="30" r="1.5" fill="#EDF5FF"/>
+  <circle cx="28" cy="72" r="1.2" fill="#EDF5FF"/>
+  <circle cx="78" cy="65" r="1" fill="#48D7FF"/>
+</svg>

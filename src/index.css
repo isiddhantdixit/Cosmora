@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-space-deep: #030611;
+  --color-space-midnight: #071126;
+  --color-space-nebula: #163B70;
+  --color-space-electric: #3B82F6;
+  --color-space-cyan: #48D7FF;
+  --color-space-white: #EDF5FF;
+  --color-space-muted: #9EACC4;
+  --color-space-amber: #F59E0B;
+  --color-space-violet: #8B5CF6;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #030611;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(72, 215, 255, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(72, 215, 255, 0.4);
+}
+
+/* Base resets & typography */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #030611;
+  color: #EDF5FF;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphic UI helpers */
+.glass-panel {
+  background: rgba(7, 17, 38, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-subtle {
+  background: rgba(7, 17, 38, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-glow {
+  background: rgba(7, 17, 38, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(72, 215, 255, 0.25);
+  box-shadow: 0 0 35px -10px rgba(72, 215, 255, 0.2);
+}
+
+/* Subtle astronomical grid and radar line effect */
+.celestial-radar {
+  background-image: 
+    radial-gradient(circle at center, rgba(72, 215, 255, 0.08) 0%, transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+}
+
+/* Reticle crosshair styling */
+.reticle-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: rgba(72, 215, 255, 0.6);
+  pointer-events: none;
+}
+
+/* Prevent unwanted selection on 3D controls */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
