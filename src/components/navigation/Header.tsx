@@ -10,21 +10,24 @@ import {
   Search,
   Settings,
   MapPin,
-  Smartphone,
   Menu,
-  X
+  X,
+  User
 } from 'lucide-react';
 import { useUserPreferences } from '../../app/providers/UserPreferencesProvider';
 import { GlobalSearchModal } from '../ui/GlobalSearchModal';
+import { DeveloperContactModal } from '../ui/DeveloperContactModal';
 
 export const Header: React.FC = () => {
   const { preferences, detectGeolocation, isLocating } = useUserPreferences();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Secondary navigational routes
-  const standardNavLinks = [
+  // Navigation Links
+  const navLinks = [
+    { to: '/explore', label: 'AR Sky', icon: Compass, isAR: true },
     { to: '/universe', label: '3D Universe', icon: Orbit },
     { to: '/tonight', label: "Tonight's Sky", icon: Moon },
     { to: '/planets', label: 'Planets', icon: Globe2 },
@@ -44,7 +47,7 @@ export const Header: React.FC = () => {
           {/* Brand Logo & Title */}
           <Link
             to="/"
-            className="flex items-center gap-3 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#48D7FF]"
+            className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#48D7FF]"
           >
             <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#163B70] via-[#071126] to-[#030611] p-0.5 border border-[#48D7FF]/30 shadow-glow-cyan/25 group-hover:shadow-glow-cyan group-hover:border-[#48D7FF]/60 transition-all duration-300">
               <div className="w-full h-full rounded-[10px] bg-[#030611] flex items-center justify-center relative overflow-hidden">
@@ -62,56 +65,54 @@ export const Header: React.FC = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation & Prominent AR Sky Button */}
-          <div className="hidden lg:flex items-center gap-2">
-            {/* ================= FLAGSHIP AR SKY BUTTON ================= */}
-            <NavLink
-              to="/explore"
-              className={({ isActive }) =>
-                `relative px-4 py-2 rounded-full text-xs font-semibold tracking-wide flex items-center gap-2.5 transition-all duration-300 shadow-lg ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#3B82F6] to-[#48D7FF] text-[#030611] shadow-glow-cyan ring-2 ring-[#48D7FF]'
-                    : 'bg-gradient-to-r from-[#163B70] to-[#071126] text-[#EDF5FF] border border-[#48D7FF]/40 hover:border-[#48D7FF] hover:shadow-glow-cyan/40 hover:scale-[1.02] active:scale-95'
-                }`
-              }
-            >
-              <div className="relative flex items-center justify-center">
-                <Compass className="w-4 h-4 text-[#48D7FF] group-hover:rotate-45 transition-transform" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#48D7FF] animate-ping" />
-              </div>
-              <span className="font-display tracking-wider">AR SKY EXPLORER</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono uppercase bg-[#48D7FF]/20 text-[#48D7FF] border border-[#48D7FF]/40">
-                LIVE
-              </span>
-            </NavLink>
-
-            {/* Standard Nav Links Bar */}
-            <nav className="flex items-center p-1 rounded-full glass-panel border border-white/10 shadow-lg">
-              <div className="flex items-center gap-0.5">
-                {standardNavLinks.map((link) => {
-                  const Icon = link.icon;
+          {/* Unified Desktop Navigation Bar */}
+          <nav className="hidden lg:flex items-center p-1 rounded-full glass-panel border border-white/10 shadow-lg">
+            <div className="flex items-center gap-1">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                if (link.isAR) {
                   return (
                     <NavLink
                       key={link.to}
                       to={link.to}
                       className={({ isActive }) =>
-                        `px-3 py-1.5 rounded-full text-xs font-medium tracking-wide flex items-center gap-1.5 transition-all duration-200 ${
+                        `px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all duration-200 ${
                           isActive
-                            ? 'bg-[#163B70]/80 text-[#EDF5FF] border border-[#48D7FF]/40 shadow-glow-cyan/20'
-                            : 'text-[#9EACC4] hover:text-[#EDF5FF] hover:bg-white/5'
+                            ? 'bg-gradient-to-r from-[#3B82F6] to-[#48D7FF] text-[#030611] shadow-glow-cyan font-bold'
+                            : 'bg-[#163B70]/40 text-[#48D7FF] border border-[#48D7FF]/30 hover:border-[#48D7FF] hover:bg-[#163B70]/70'
                         }`
                       }
                     >
-                      <Icon className="w-3.5 h-3.5 text-[#48D7FF]/80" />
+                      <Icon className="w-3.5 h-3.5" />
                       <span>{link.label}</span>
+                      <span className="px-1.5 py-0.2 rounded-full text-[8px] font-mono bg-[#48D7FF]/20 uppercase">
+                        Live
+                      </span>
                     </NavLink>
                   );
-                })}
-              </div>
-            </nav>
-          </div>
+                }
 
-          {/* Action Icons: Location, Pair Phone, Search, Settings */}
+                return (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    className={({ isActive }) =>
+                      `px-3 py-1.5 rounded-full text-xs font-medium tracking-wide flex items-center gap-1.5 transition-all duration-200 ${
+                        isActive
+                          ? 'bg-[#163B70]/80 text-[#EDF5FF] border border-[#48D7FF]/40 shadow-glow-cyan/20'
+                          : 'text-[#9EACC4] hover:text-[#EDF5FF] hover:bg-white/5'
+                      }`
+                    }
+                  >
+                    <Icon className="w-3.5 h-3.5 text-[#48D7FF]/80" />
+                    <span>{link.label}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          </nav>
+
+          {/* Action Icons: Location, Search, Contact, Settings */}
           <div className="flex items-center gap-2 shrink-0">
             {/* Observer Location Context */}
             <button
@@ -120,23 +121,13 @@ export const Header: React.FC = () => {
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-panel-subtle text-xs font-mono text-[#9EACC4] hover:text-[#EDF5FF] hover:border-[#48D7FF]/30 transition-all cursor-pointer"
             >
               <MapPin className={`w-3.5 h-3.5 ${isLocating ? 'animate-bounce text-[#48D7FF]' : 'text-[#48D7FF]'}`} />
-              <span className="max-w-[130px] truncate">{formattedLocation}</span>
-            </button>
-
-            {/* Connect Smartphone Action */}
-            <button
-              onClick={() => navigate('/explore?mode=pair')}
-              title="Connect your phone as a live sky camera"
-              className="hidden xl:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#163B70]/40 border border-[#48D7FF]/35 text-xs font-mono font-medium text-[#48D7FF] hover:bg-[#163B70]/80 hover:shadow-glow-cyan transition-all"
-            >
-              <Smartphone className="w-3.5 h-3.5 text-[#48D7FF]" />
-              <span>Pair Phone</span>
+              <span className="max-w-[120px] truncate">{formattedLocation}</span>
             </button>
 
             {/* Global Search Dialog Trigger */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 sm:px-3 sm:py-1.5 rounded-full glass-panel-subtle text-xs text-[#9EACC4] hover:text-[#EDF5FF] hover:border-white/20 transition-all flex items-center gap-2"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-full glass-panel-subtle text-xs text-[#9EACC4] hover:text-[#EDF5FF] hover:border-white/20 transition-all flex items-center gap-2 cursor-pointer"
               aria-label="Search astronomical objects"
             >
               <Search className="w-3.5 h-3.5 text-[#48D7FF]" />
@@ -146,11 +137,21 @@ export const Header: React.FC = () => {
               </kbd>
             </button>
 
+            {/* Developer Contact Button */}
+            <button
+              onClick={() => setIsContactOpen(true)}
+              className="p-2 sm:px-3 sm:py-1.5 rounded-full glass-panel-subtle text-xs font-mono text-[#9EACC4] hover:text-[#EDF5FF] hover:border-[#48D7FF]/30 transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Developer Contact: Siddhant Dixit"
+            >
+              <User className="w-3.5 h-3.5 text-[#48D7FF]" />
+              <span className="hidden xl:inline text-[11px]">Developer</span>
+            </button>
+
             {/* Settings Link */}
             <NavLink
               to="/settings"
               className={({ isActive }) =>
-                `p-2 rounded-full glass-panel-subtle transition-all ${
+                `p-2 rounded-full glass-panel-subtle transition-all cursor-pointer ${
                   isActive ? 'border-[#48D7FF]/50 text-[#48D7FF]' : 'text-[#9EACC4] hover:text-[#EDF5FF]'
                 }`
               }
@@ -162,7 +163,7 @@ export const Header: React.FC = () => {
             {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-full glass-panel text-[#EDF5FF]"
+              className="lg:hidden p-2 rounded-full glass-panel text-[#EDF5FF] cursor-pointer"
               aria-label="Toggle navigation menu"
             >
               {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -188,9 +189,9 @@ export const Header: React.FC = () => {
               </span>
             </NavLink>
 
-            {/* Other Navigation Links */}
+            {/* Navigation Links Grid */}
             <div className="grid grid-cols-2 gap-2">
-              {standardNavLinks.map((link) => {
+              {navLinks.filter((l) => !l.isAR).map((link) => {
                 const Icon = link.icon;
                 return (
                   <NavLink
@@ -212,6 +213,22 @@ export const Header: React.FC = () => {
               })}
             </div>
 
+            {/* Developer Contact Quick Link */}
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsContactOpen(true);
+              }}
+              className="w-full p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-between text-xs text-[#EDF5FF] font-mono"
+            >
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-[#48D7FF]" />
+                <span>Developer: Siddhant Dixit</span>
+              </div>
+              <span className="text-[10px] text-[#48D7FF]">Contact</span>
+            </button>
+
+            {/* GPS Location & Settings */}
             <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-[#9EACC4]">
               <div className="flex items-center gap-1.5 truncate">
                 <MapPin className="w-3.5 h-3.5 text-[#48D7FF]" />
@@ -233,6 +250,9 @@ export const Header: React.FC = () => {
 
       {/* Global Search Dialog Modal */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      {/* Developer Contact Modal */}
+      <DeveloperContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </>
   );
 };

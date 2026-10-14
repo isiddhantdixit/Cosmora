@@ -18,7 +18,8 @@ import {
   Crosshair,
   Volume2,
   VolumeX,
-  Eye
+  Eye,
+  Orbit
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAstronomy } from '../../app/providers/AstronomyContext';
@@ -118,6 +119,23 @@ export const SkyExplorerPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [isSimulatingPhone]);
 
+  // Automatically open camera when user opens AR View
+  useEffect(() => {
+    startCamera();
+  }, []);
+
+  // Ensure video element plays whenever stream is established
+  useEffect(() => {
+    if (stream && videoRef.current) {
+      if (videoRef.current.srcObject !== stream) {
+        videoRef.current.srcObject = stream;
+      }
+      videoRef.current.play().catch((err) => {
+        console.warn('Auto-play was prevented by browser policy:', err);
+      });
+    }
+  }, [stream]);
+
   // Start Camera Stream
   const startCamera = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -141,7 +159,7 @@ export const SkyExplorerPage: React.FC = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
-        videoRef.current.play();
+        videoRef.current.play().catch(() => {});
       }
 
       bindOrientationSensors();
@@ -509,53 +527,73 @@ export const SkyExplorerPage: React.FC = () => {
       )}
 
       {/* ================= HUD TOP STATUS BAR ================= */}
-      <div className="absolute top-4 left-4 right-4 z-40 flex items-center justify-between gap-2 pointer-events-auto">
-        {/* Exit AR */}
-        <button
-          onClick={() => navigate('/')}
-          className="p-2.5 rounded-full glass-panel border border-white/15 text-[#EDF5FF] hover:bg-white/10 transition-all flex items-center gap-2 cursor-pointer shadow-lg"
-        >
-          <X className="w-4 h-4" />
-          <span className="text-xs font-mono hidden sm:inline">Exit AR</span>
-        </button>
+      <div className="absolute top-4 left-3 right-3 sm:left-6 sm:right-6 z-40 flex items-center justify-between gap-2 pointer-events-auto">
+        {/* Left: Exit AR & Brand */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/')}
+            className="px-3 py-2 rounded-full glass-panel border border-white/20 text-[#EDF5FF] hover:bg-white/10 hover:border-[#48D7FF]/50 transition-all flex items-center gap-2 cursor-pointer shadow-xl group"
+            title="Exit AR View & Return to Home"
+          >
+            <X className="w-4 h-4 text-[#48D7FF] group-hover:rotate-90 transition-transform" />
+            <span className="text-xs font-mono font-medium hidden sm:inline">Exit AR</span>
+          </button>
 
-        {/* Real-time Compass Tape & Sector Readout */}
-        <div className="px-4 py-2 rounded-full glass-panel-glow border border-[#48D7FF]/35 flex items-center gap-3 text-xs font-mono text-[#EDF5FF] shadow-2xl">
+          <button
+            onClick={() => navigate('/universe')}
+            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-full glass-panel-subtle text-xs font-mono text-[#9EACC4] hover:text-[#EDF5FF] hover:border-[#48D7FF]/30 transition-all"
+            title="Switch to 3D Celestial Sphere Planetarium"
+          >
+            <Orbit className="w-3.5 h-3.5 text-[#48D7FF]" />
+            <span>3D Universe</span>
+          </button>
+        </div>
+
+        {/* Center: Real-time Compass Tape & Sector Readout */}
+        <div className="hidden sm:flex px-4 py-2 rounded-full glass-panel-glow border border-[#48D7FF]/35 items-center gap-3 text-xs font-mono text-[#EDF5FF] shadow-2xl">
           <div className="flex items-center gap-1.5 text-[#48D7FF]">
             <Compass className="w-4 h-4 animate-spin-slow" />
             <span className="font-bold">{cardinalHeading}</span>
           </div>
-          <span className="text-white/20 hidden sm:inline">|</span>
-          <span className="text-[#9EACC4] hidden sm:inline truncate max-w-[200px]">
+          <span className="text-white/20 hidden md:inline">|</span>
+          <span className="text-[#9EACC4] hidden md:inline truncate max-w-[160px] lg:max-w-[220px]">
             {skySectorName}
           </span>
-          <span className="text-white/20">|</span>
+          <span className="text-white/20 hidden lg:inline">|</span>
           <span className="text-xs font-semibold text-emerald-400">
             {visibleObjectsWithScreenPos.length} in View
           </span>
         </div>
 
-        {/* Camera Start / Pair Phone */}
-        <div className="flex items-center gap-2">
-          {cameraState !== 'active' ? (
-            <button
-              onClick={startCamera}
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#48D7FF] text-[#030611] font-bold text-xs font-mono shadow-glow-cyan flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
-            >
-              <Camera className="w-4 h-4" />
-              <span>Start Camera</span>
-            </button>
-          ) : (
+        {/* Right: Camera Toggle / Pair Phone */}
+        <div className="flex items-center gap-2 shrink-0">
+          {cameraState === 'active' ? (
             <button
               onClick={() => {
                 if (stream) stream.getTracks().forEach((t) => t.stop());
                 setStream(null);
                 setCameraState('idle');
               }}
-              className="p-2 rounded-full glass-panel text-red-400 hover:bg-red-500/20 border border-red-500/30 transition-all"
-              title="Stop Camera Stream"
+              className="px-3 py-1.5 rounded-full glass-panel border border-emerald-400/40 text-emerald-300 hover:bg-red-500/10 hover:border-red-400/50 hover:text-red-400 text-xs font-mono flex items-center gap-2 transition-all cursor-pointer shadow-lg"
+              title="Camera is active. Click to pause camera stream."
             >
-              <Camera className="w-4 h-4" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <Camera className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Camera On</span>
+            </button>
+          ) : cameraState === 'requesting' ? (
+            <div className="px-3 py-1.5 rounded-full glass-panel text-[#48D7FF] text-xs font-mono flex items-center gap-2 border border-[#48D7FF]/30">
+              <Camera className="w-3.5 h-3.5 animate-pulse" />
+              <span className="hidden sm:inline">Opening Camera...</span>
+            </div>
+          ) : (
+            <button
+              onClick={startCamera}
+              className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#48D7FF] text-[#030611] font-bold text-xs font-mono shadow-glow-cyan flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+              title="Activate live camera feed"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>Start Camera</span>
             </button>
           )}
 
@@ -565,11 +603,11 @@ export const SkyExplorerPage: React.FC = () => {
               setIsCompanionModalOpen(true);
               if (!companionHostRef.current) setupCompanionHost();
             }}
-            className="p-2 sm:px-3 sm:py-2 rounded-full glass-panel border border-[#48D7FF]/35 text-[#48D7FF] text-xs font-mono flex items-center gap-1.5 hover:bg-[#163B70]/50 transition-all cursor-pointer"
+            className="px-3 py-1.5 rounded-full glass-panel border border-[#48D7FF]/35 text-[#48D7FF] text-xs font-mono flex items-center gap-1.5 hover:bg-[#163B70]/50 transition-all cursor-pointer shadow-lg"
             title="Connect your mobile phone as wireless lens"
           >
-            <Smartphone className="w-4 h-4" />
-            <span className="hidden md:inline">Pair Phone</span>
+            <Smartphone className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Pair Phone</span>
           </button>
         </div>
       </div>

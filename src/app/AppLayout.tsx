@@ -11,17 +11,18 @@ export const AppLayout: React.FC = () => {
   // Certain immersive routes manage their own 3D scene or camera stream
   const isDedicatedCanvas = location.pathname === '/explore' || location.pathname === '/universe';
   const isCompanion = location.pathname === '/companion';
+  const isExplore = location.pathname === '/explore';
 
   return (
     <div className="min-h-[100dvh] bg-[#030611] text-[#EDF5FF] flex flex-col relative selection:bg-[#48D7FF]/30 selection:text-white">
       {/* Real-time 3D Galaxy background for observatory & informational pages */}
       {!isDedicatedCanvas && !isCompanion && <GalaxyBackground />}
 
-      {/* Main Top Header Navigation */}
-      {!isCompanion && <Header />}
+      {/* Main Top Header Navigation (Hidden in immersive AR View to avoid control overlap) */}
+      {!isCompanion && !isExplore && <Header />}
 
       {/* Coordinate & AR Calibration Prompt on Site Launch */}
-      {!isCompanion && <LocationPromptModal />}
+      {!isCompanion && !isExplore && <LocationPromptModal />}
 
       {/* Page Content Outlet */}
       <main className="flex-1 w-full relative z-10">
@@ -29,7 +30,7 @@ export const AppLayout: React.FC = () => {
       </main>
 
       {/* Mobile Bottom Thumb Bar */}
-      {!isCompanion && <MobileNav />}
+      {!isCompanion && !isExplore && <MobileNav />}
     </div>
   );
 };

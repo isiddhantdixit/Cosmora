@@ -286,24 +286,42 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer Navigation */}
-      <footer className="pt-12 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-[#9EACC4] font-mono">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#48D7FF]" />
-          <span>COSMORA • Open Astronomical Engine</span>
+      {/* Footer Navigation & Developer Credits */}
+      <footer className="pt-12 pb-8 border-t border-white/10 flex flex-col gap-6 text-xs text-[#9EACC4] font-mono">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#48D7FF]" />
+            <span className="font-semibold text-[#EDF5FF]">COSMORA</span>
+            <span>• Open Astronomical & AR Engine</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-5">
+            <Link to="/explore" className="hover:text-[#48D7FF] transition-colors">AR Sky</Link>
+            <Link to="/universe" className="hover:text-[#48D7FF] transition-colors">3D Universe</Link>
+            <Link to="/tonight" className="hover:text-[#48D7FF] transition-colors">Tonight's Sky</Link>
+            <Link to="/planets" className="hover:text-[#48D7FF] transition-colors">Planets</Link>
+            <Link to="/constellations" className="hover:text-[#48D7FF] transition-colors">Constellations</Link>
+            <Link to="/satellites" className="hover:text-[#48D7FF] transition-colors">Satellites</Link>
+            <Link to="/settings" className="hover:text-[#48D7FF] transition-colors">Settings</Link>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-6">
-          <Link to="/explore" className="hover:text-[#EDF5FF]">AR Sky</Link>
-          <Link to="/universe" className="hover:text-[#EDF5FF]">3D Universe</Link>
-          <Link to="/tonight" className="hover:text-[#EDF5FF]">Tonight's Sky</Link>
-          <Link to="/planets" className="hover:text-[#EDF5FF]">Planets</Link>
-          <Link to="/constellations" className="hover:text-[#EDF5FF]">Constellations</Link>
-          <Link to="/satellites" className="hover:text-[#EDF5FF]">Satellites</Link>
-          <Link to="/settings" className="hover:text-[#EDF5FF]">Settings</Link>
+
+        {/* Developer Contact & Telemetry Attribution */}
+        <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-[#9EACC4]/80">
+          <div className="flex items-center gap-2">
+            <span>Developed by <strong className="text-[#EDF5FF] font-medium">Siddhant Dixit</strong></span>
+            <span>•</span>
+            <a
+              href="mailto:siddhantdixit@lifagroup.in"
+              className="text-[#48D7FF] hover:underline"
+              title="Email Siddhant Dixit"
+            >
+              siddhantdixit@lifagroup.in
+            </a>
+          </div>
+          <p className="text-center sm:text-right text-[#9EACC4]/60">
+            Astrodynamics & Telemetry: Hipparcos • NASA JPL • Celestrak TLE
+          </p>
         </div>
-        <p className="text-center sm:text-right">
-          Catalogues: Hipparcos • NASA JPL • Celestrak TLE
-        </p>
       </footer>
     </div>
   );

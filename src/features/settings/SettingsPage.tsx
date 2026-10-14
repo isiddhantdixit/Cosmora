@@ -10,7 +10,12 @@ import {
   CheckCircle2,
   Trash2,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  User,
+  Mail,
+  Copy,
+  Check,
+  Building2
 } from 'lucide-react';
 import { useUserPreferences } from '../../app/providers/UserPreferencesProvider';
 import { ObserverLocation } from '../../astronomy/types';
@@ -21,6 +26,7 @@ export const SettingsPage: React.FC = () => {
   const [customLat, setCustomLat] = useState(preferences.location.latitude.toString());
   const [customLon, setCustomLon] = useState(preferences.location.longitude.toString());
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
 
   // Notable Astronomical Observatories Presets
   const observatoryPresets: ObserverLocation[] = [
@@ -265,6 +271,58 @@ export const SettingsPage: React.FC = () => {
           <div className="p-3 bg-black/40 rounded-xl border border-white/5">
             <strong className="text-[#48D7FF] block mb-1">3. Manual Recalibrate</strong>
             Use the Recalibrate icon in AR Sky to instantly zero North to your gaze.
+          </div>
+        </div>
+      </section>
+
+      {/* Developer Information & Contact */}
+      <section className="p-6 sm:p-8 rounded-2xl glass-panel border border-[#48D7FF]/30 space-y-5 shadow-glow-cyan/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <User className="w-5 h-5 text-[#48D7FF]" />
+            <h2 className="text-lg font-bold font-display text-[#EDF5FF]">
+              Developer & Project Inquiries
+            </h2>
+          </div>
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-[#48D7FF]/10 text-[#48D7FF] border border-[#48D7FF]/20">
+            LIFA Group
+          </span>
+        </div>
+
+        <p className="text-xs text-[#9EACC4] leading-relaxed">
+          Cosmora is developed and maintained by Siddhant Dixit. For feature proposals, astronomical engine collaborations, research integrations, or bug reports, feel free to get in touch.
+        </p>
+
+        <div className="p-4 rounded-xl bg-black/40 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="text-xs text-[#9EACC4] font-mono">Lead Developer</div>
+            <strong className="text-base text-[#EDF5FF] font-display">Siddhant Dixit</strong>
+            <div className="text-xs text-[#48D7FF] font-mono mt-0.5 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5" />
+              <span>LIFA Group</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText('siddhantdixit@lifagroup.in');
+                setCopiedEmail(true);
+                setTimeout(() => setCopiedEmail(false), 2000);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-mono text-[#EDF5FF] border border-white/10 flex items-center gap-2 transition-all cursor-pointer"
+            >
+              {copiedEmail ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#48D7FF]" />}
+              <span>{copiedEmail ? 'Copied' : 'siddhantdixit@lifagroup.in'}</span>
+            </button>
+
+            <a
+              href="mailto:siddhantdixit@lifagroup.in?subject=Cosmora%20Inquiry"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#48D7FF] text-[#030611] font-bold text-xs font-mono flex items-center gap-2 shadow-glow-cyan hover:brightness-110 transition-all"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Send Email</span>
+            </a>
           </div>
         </div>
       </section>
